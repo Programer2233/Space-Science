@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recruit Dashboard | Space Science Club</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    .dashboard-container { padding-top: 100px; min-height: 100vh; position: relative; z-index: 1; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border-glass); }
+    
+    .stats-bar { display: flex; gap: 15px; margin-top: 15px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-secondary); flex-wrap: wrap; }
+    .stat-badge { background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--border-glass); }
+    
+    .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-bottom: 30px; }
+    
+    .list-item { padding: 15px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; }
+    .list-item:last-child { border-bottom: none; }
+    
+    .mission-title { font-weight: 600; color: var(--text-primary); margin-bottom: 5px; }
+    .mission-xp { color: var(--accent-cyan); font-family: var(--font-mono); font-size: 0.8rem; }
+    
+    .btn-small { padding: 8px 16px; font-size: 0.8rem; font-family: var(--font-body); background: var(--gradient-accent); color: white; border: none; border-radius: var(--radius-full); cursor: pointer; transition: all 0.2s ease; }
+    .btn-small:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3); }
+    .btn-small[disabled] { background: #333; color: #888; cursor: not-allowed; transform: none; box-shadow: none; }
+    
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); }
+    .form-group input, .form-group textarea { width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-glass); color: white; border-radius: 8px; font-family: var(--font-body); }
+    
+    @media (max-width: 900px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .dashboard-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+    }
+    
+    .lockout-container {
+      display: none;
+      text-align: center;
+      padding: 150px 20px;
+      z-index: 10;
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body style="display: none;">
+
+  <!-- ======== WELCOME OVERLAY ======== -->
+  <div class="loader-overlay" id="welcomeOverlay">
+    <div class="loader-content" style="display: flex; flex-direction: column; align-items: center;">
+      <div class="loader-logo" style="margin-bottom: 20px; font-size: 4rem;">👋</div>
+      <h2 id="welcomeOverlayText" style="font-family: var(--font-display); font-size: 2.5rem; color: white; margin-bottom: 15px;">Welcome</h2>
+      <div class="loader-terminal" style="text-align: center; background: none; border: none; min-height: auto; padding: 0;">
+        <div class="terminal-line visible" style="color: var(--accent-cyan);">>> INITIALIZING DASHBOARD...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lockout-container" id="lockoutContent">
+    <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
+    <h2 style="font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-pink); margin-bottom: 15px;">Clearance Pending</h2>
+    <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; margin-bottom: 30px;">
+      Your application is currently under review by Mission Control. You will be granted access to the dashboard once your clearance is approved.
+    </p>
+    <button class="btn-secondary" onclick="handleSignOut()">Return to Base (Sign Out)</button>
+  </div>
+
+  <div class="dashboard-container container" id="dashboardContent" style="display: none;">
+    <div class="dashboard-header">
+      <div id="userInfo" style="display: flex; gap: 20px; align-items: center;">
+        <div id="dAvatar" onclick="openAvatarModal()" style="cursor: pointer; width: 80px; height: 80px; border-radius: 50%; background: var(--gradient-accent); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-family: var(--font-display); border: 2px solid var(--accent-blue); overflow: hidden; position: relative;">
+          <span id="dAvatarInitials">?</span>
+          <img id="dAvatarImg" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; font-size: 0.6rem; text-align: center; padding: 2px 0;">EDIT</div>
+        </div>
+        <div>
+          <h1 id="welcomeText" style="font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; margin-bottom: 8px; background: var(--gradient-text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Welcome, Recruit</h1>
+          <div class="stats-bar">
+            <div class="stat-badge" id="rankText">Rank: Loading...</div>
+            <div class="stat-badge" id="xpText">XP: 0</div>
+            <div class="stat-badge" id="divisionText">Division: Loading...</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-secondary" onclick="handleSignOut()">Sign Out</button>
+    </div>
+
+    <div class="dashboard-grid">
+      <!-- Left Column -->
+      <div style="display: flex; flex-direction: column; gap: 30px;">
+        
+        <!-- Mission Log (Projects & Updates) -->
+        <div class="research-card" style="padding: 0; overflow: hidden;">
+          <div style="padding: 25px; border-bottom: 1px solid var(--border-glass); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <div class="research-card-tag">Engineering</div>
+              <h3 style="font-family: var(--font-display); font-size: 1.5rem; margin: 0; color: var(--text-primary);">Mission Log</h3>
+            </div>
+            <button class="btn-small" onclick="document.getElementById('projectForm').style.display='block'">+ New Project</button>
+          </div>
+          
+          <div id="projectForm" style="display: none; padding: 25px; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.3);">
+             <form id="newProjectForm" onsubmit="submitNewProject(event)">
+                <div class="form-group">
+                   <label>PROJECT TITLE</label>
+                   <input type="text" id="newProjectTitle" required placeholder="e.g. Lunar Rover Prototype">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                   <button type="submit" class="btn-small">Create Project</button>
+                   <button type="button" class="btn-small" style="background: transparent; border: 1px solid var(--border-glass);" onclick="document.getElementById('projectForm').style.display='none'">Cancel</button>
+                </div>
+             </form>
+          </div>
+
+          <div id="updateFormContainer" style="display: none; padding: 25px; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.3);">
+             <form id="projectUpdateForm" onsubmit="submitProjectUpdate(event)">
+                <input type="hidden" id="updateProjectId">
+                <div class="form-group">
+                   <label>LOG UPDATE</label>
+                   <textarea id="updateText" rows="3" required placeholder="Describe your progress..."></textarea>
+                </div>
+                <div class="form-group">
+                   <label>EVIDENCE (IMAGE - OPTIONAL)</label>
+                   <input type="file" id="updateImage" accept="image/*">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                   <button type="submit" class="btn-small">Submit Update</button>
+                   <button type="button" class="btn-small" style="background: transparent; border: 1px solid var(--border-glass);" onclick="document.getElementById('updateFormContainer').style.display='none'">Cancel</button>
+                </div>
+             </form>
+          </div>
+
+          <div id="projectsList" style="max-height: 400px; overflow-y: auto;">
+            <div class="list-item" style="justify-content: center; color: var(--text-muted);">Loading projects...</div>
+          </div>
+        </div>
+
+        <!-- Research Papers -->
+        <div class="research-card" style="padding: 0; overflow: hidden;">
+          <div style="padding: 25px; border-bottom: 1px solid var(--border-glass); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <div class="research-card-tag">Academics</div>
+              <h3 style="font-family: var(--font-display); font-size: 1.5rem; margin: 0; color: var(--text-primary);">Research Papers</h3>
+            </div>
+            <button class="btn-small" onclick="document.getElementById('reportForm').style.display='block'">+ Submit Paper</button>
+          </div>
+          
+          <div id="reportForm" style="display: none; padding: 25px; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.3);">
+             <form id="submissionForm" onsubmit="submitReport(event)">
+                <div class="form-group">
+                   <label>PAPER TITLE</label>
+                   <input type="text" id="reportTitle" required>
+                </div>
+                <div class="form-group">
+                   <label>ABSTRACT</label>
+                   <textarea id="reportAbstract" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                   <label>PAPER DOCUMENT (PDF)</label>
+                   <input type="file" id="reportFile" accept=".pdf" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                   <button type="submit" class="btn-small">Submit for Approval</button>
+                   <button type="button" class="btn-small" style="background: transparent; border: 1px solid var(--border-glass);" onclick="document.getElementById('reportForm').style.display='none'">Cancel</button>
+                </div>
+             </form>
+          </div>
+
+          <div id="reportsList" style="max-height: 300px; overflow-y: auto;">
+            <div class="list-item" style="justify-content: center; color: var(--text-muted);">Loading submissions...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column -->
+      <div style="display: flex; flex-direction: column; gap: 30px;">
+        
+        <!-- Notifications -->
+        <div class="research-card" style="padding: 0; overflow: hidden;">
+          <div style="padding: 20px; border-bottom: 1px solid var(--border-glass); background: rgba(255,255,255,0.02);">
+            <div class="research-card-tag" style="background: rgba(74, 158, 255, 0.1); color: var(--accent-blue);">Comms</div>
+            <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin: 0; color: var(--text-primary);">Notifications</h3>
+          </div>
+          <div id="notificationsList" style="max-height: 300px; overflow-y: auto;">
+            <div class="list-item" style="justify-content: center; color: var(--text-muted);">Loading comms...</div>
+          </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="research-card" style="padding: 0; overflow: hidden;">
+          <div style="padding: 20px; border-bottom: 1px solid var(--border-glass); background: rgba(255,255,255,0.02);">
+            <div class="research-card-tag" style="background: rgba(199, 125, 255, 0.1); color: var(--accent-pink);">Global</div>
+            <h3 style="font-family: var(--font-display); font-size: 1.2rem; margin: 0; color: var(--text-primary);">Top Recruits</h3>
+          </div>
+          <div id="leaderboardList" style="max-height: 400px; overflow-y: auto;">
+            <div class="list-item" style="justify-content: center; color: var(--text-muted);">Loading leaderboard...</div>
+          </div>
+        </div>
+
+        <!-- Avatar Modal -->
+        <div id="avatarModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%;">
+            <h3 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 20px;">Choose Avatar</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;">
+              <img src="assets/images/avatars/avatar_1.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_1.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_2.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_2.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_3.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_3.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_4.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_4.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_5.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_5.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_6.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_6.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_7.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_7.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_8.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_8.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_9.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_9.svg', this)" class="avatar-option">
+              <img src="assets/images/avatars/avatar_10.svg" style="width: 100%; border-radius: 50%; cursor: pointer; border: 2px solid transparent;" onclick="selectAvatar('assets/images/avatars/avatar_10.svg', this)" class="avatar-option">
+            </div>
+
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+              <button class="btn-small" onclick="saveAvatar()">Save Avatar</button>
+              <button class="btn-small" style="background: transparent; border: 1px solid var(--border-glass);" onclick="document.getElementById('avatarModal').style.display='none'">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let selectedAvatarUrl = null;
+    let currentEnlistmentId = null;
+
+    function openAvatarModal() {
+      document.getElementById('avatarModal').style.display = 'flex';
+      document.querySelectorAll('.avatar-option').forEach(el => el.style.borderColor = 'transparent');
+    }
+
+    function selectAvatar(url, el) {
+      selectedAvatarUrl = url;
+      document.querySelectorAll('.avatar-option').forEach(opt => opt.style.borderColor = 'transparent');
+      if (el) el.style.borderColor = 'var(--accent-cyan)';
+    }
+
+
+    async function saveAvatar() {
+      if (!selectedAvatarUrl || !currentEnlistmentId) return;
+      try {
+        await supabaseClient.from('enlistments').update({ avatar_url: selectedAvatarUrl }).eq('id', currentEnlistmentId);
+        document.getElementById('dAvatarInitials').style.display = 'none';
+        const img = document.getElementById('dAvatarImg');
+        img.src = selectedAvatarUrl;
+        img.style.display = 'block';
+        document.getElementById('avatarModal').style.display = 'none';
+        showToast('Avatar updated successfully!', 'success');
+      } catch (err) {
+        showToast('Failed to update avatar.', 'error');
+      }
+    }
+
+    async function initDashboard() {
+      const user = await requireAuth(['recruit', 'admin']);
+      if (!user) return;
+      currentUser = user;
+      
+      try {
+        const metadata = user?.user_metadata || {};
+        let firstName = metadata.callsign || '';
+        let lastName = metadata.identifier || '';
+        
+        const data = await getRecruitData(user.id);
+        const enlistment = data.enlistment || {};
+        
+        if (enlistment.status !== 'approved' && getUserRole(user) !== 'admin') {
+           document.getElementById('lockoutContent').style.display = 'block';
+           document.body.style.display = 'block';
+           setTimeout(() => {
+             const overlay = document.getElementById('welcomeOverlay');
+             if (overlay) overlay.classList.add('hidden');
+           }, 500);
+           return;
+        }
+        
+        document.getElementById('dashboardContent').style.display = 'block';
+        
+        if (!firstName) firstName = enlistment.callsign || '';
+        if (!lastName) lastName = enlistment.identifier || '';
+        
+        currentEnlistmentId = enlistment.id;
+
+        const fullName = `${firstName} ${lastName}`.trim();
+        const displayName = fullName || 'Recruit';
+        
+        // Update header texts
+        document.getElementById('welcomeOverlayText').textContent = `Welcome, ${displayName}`;
+        document.getElementById('welcomeText').textContent = `Welcome, ${displayName}`;
+        document.getElementById('rankText').textContent = `Rank: Level ${enlistment.level || 1}`;
+        document.getElementById('xpText').textContent = `XP: ${enlistment.xp || 0}`;
+        document.getElementById('divisionText').textContent = `Division: ${enlistment.division || 'Unassigned'}`;
+        
+        if (enlistment.avatar_url) {
+          document.getElementById('dAvatarInitials').style.display = 'none';
+          const img = document.getElementById('dAvatarImg');
+          img.src = enlistment.avatar_url;
+          img.style.display = 'block';
+        } else {
+          document.getElementById('dAvatarInitials').textContent = firstName ? firstName.charAt(0).toUpperCase() : '?';
+        }
+        
+        // Load features
+        await Promise.all([
+           loadProjects(data.projects || [], data.updates || []),
+           loadReports(data.submissions || []),
+           loadNotifications(user.id),
+           loadLeaderboard()
+        ]);
+        
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        showToast('Failed to sync with Mission Control.', 'error');
+      }
+      
+      document.body.style.display = 'block';
+      setTimeout(() => {
+        const overlay = document.getElementById('welcomeOverlay');
+        if (overlay) overlay.classList.add('hidden');
+      }, 1000);
+    }
+
+    function loadProjects(projects, updates) {
+      const container = document.getElementById('projectsList');
+      container.innerHTML = '';
+      
+      if (!projects || projects.length === 0) {
+         container.innerHTML = '<div class="list-item" style="color: var(--text-muted); justify-content: center;">No projects created yet.</div>';
+         return;
+      }
+      
+      projects.forEach(project => {
+         // Get number of updates for this project
+         const projectUpdates = updates.filter(u => u.project_id === project.id);
+         const lastUpdate = projectUpdates.length > 0 ? new Date(projectUpdates[0].created_at).toLocaleDateString() : 'No updates yet';
+         
+         const div = document.createElement('div');
+         div.className = 'list-item';
+         div.style.flexDirection = 'column';
+         div.style.alignItems = 'stretch';
+         div.style.gap = '15px';
+         
+         let updatesHtml = '';
+         if (projectUpdates.length > 0) {
+             updatesHtml = `<div style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                 <h4 style="font-size: 0.8rem; color: var(--accent-cyan); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.1em;">Mission Logs</h4>
+                 <div style="display: flex; flex-direction: column; gap: 15px;">
+                 ${projectUpdates.map(u => `
+                     <div style="border-left: 2px solid var(--border-glass); padding-left: 15px;">
+                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px;">${new Date(u.created_at).toLocaleString()}</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">${escapeHTML(u.update_text)}</div>
+                        ${u.image_url ? `<a href="${u.image_url}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 0.8rem; color: var(--accent-blue); text-decoration: none;">🖼️ View Attached Evidence ↗</a>` : ''}
+                     </div>
+                 `).join('')}
+                 </div>
+             </div>`;
+         }
+
+         div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+               <div>
+                  <div class="mission-title">${escapeHTML(project.title)}</div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Latest update: ${lastUpdate}</div>
+                  <div class="mission-xp">${projectUpdates.length} logs recorded</div>
+               </div>
+               <div>
+                  <button class="btn-small" onclick="openUpdateForm('${project.id}')">Log Update</button>
+               </div>
+            </div>
+            ${updatesHtml}
+         `;
+         container.appendChild(div);
+      });
+    }
+
+    function openUpdateForm(projectId) {
+       document.getElementById('updateProjectId').value = projectId;
+       document.getElementById('updateFormContainer').style.display = 'block';
+    }
+
+    async function submitNewProject(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      
+      const title = document.getElementById('newProjectTitle').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      
+      try {
+         btn.disabled = true;
+         btn.textContent = 'Creating...';
+         await createProject(currentUser.id, title);
+         showToast('Project created successfully!', 'success');
+         setTimeout(() => window.location.reload(), 1000);
+      } catch (err) {
+         showToast('Failed to create project.', 'error');
+         console.error(err);
+         btn.disabled = false;
+         btn.textContent = 'Create Project';
+      }
+    }
+
+    async function submitProjectUpdate(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      
+      const projectId = document.getElementById('updateProjectId').value;
+      const updateText = document.getElementById('updateText').value;
+      const fileInput = document.getElementById('updateImage');
+      const file = fileInput.files[0] || null;
+      
+      const btn = e.target.querySelector('button[type="submit"]');
+      
+      try {
+         btn.disabled = true;
+         btn.textContent = 'Submitting...';
+         await addProjectUpdate(projectId, currentUser.id, updateText, file);
+         showToast('Project update logged successfully!', 'success');
+         setTimeout(() => window.location.reload(), 1000);
+      } catch (err) {
+         showToast('Failed to log update.', 'error');
+         console.error(err);
+         btn.disabled = false;
+         btn.textContent = 'Submit Update';
+      }
+    }
+
+    function loadReports(submissions) {
+      const container = document.getElementById('reportsList');
+      container.innerHTML = '';
+      if (!submissions || submissions.length === 0) {
+         container.innerHTML = '<div class="list-item" style="color: var(--text-muted); justify-content: center;">No research papers submitted yet.</div>';
+         return;
+      }
+      submissions.forEach(sub => {
+         const div = document.createElement('div');
+         div.className = 'list-item';
+         div.innerHTML = `
+            <div>
+               <div class="mission-title">${escapeHTML(sub.title)}</div>
+               <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">Status: <span style="color: ${sub.status === 'approved' ? 'var(--accent-cyan)' : 'var(--text-muted)'}">${escapeHTML(sub.status.toUpperCase())}</span></div>
+            </div>
+            <div>
+               ${sub.pdf_url ? `<a href="${escapeHTML(sub.pdf_url)}" target="_blank" class="btn-small" style="text-decoration: none; display: inline-block;">View</a>` : ''}
+            </div>
+         `;
+         container.appendChild(div);
+      });
+    }
+
+    async function submitReport(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      
+      const title = document.getElementById('reportTitle').value;
+      const abstract = document.getElementById('reportAbstract').value;
+      const fileInput = document.getElementById('reportFile');
+      const file = fileInput.files[0];
+      
+      if (!file) return;
+      
+      try {
+         const btn = e.target.querySelector('button[type="submit"]');
+         btn.disabled = true;
+         btn.textContent = 'Uploading...';
+         
+         await handleRecruitResearchSubmission({
+            title,
+            abstract,
+            author_id: currentUser.id
+         }, file);
+         
+         showToast('Paper submitted successfully for approval.', 'success');
+         e.target.reset();
+         document.getElementById('reportForm').style.display = 'none';
+         
+         // Reload page to show new report
+         setTimeout(() => window.location.reload(), 1500);
+      } catch (err) {
+         showToast('Failed to submit paper.', 'error');
+         console.error(err);
+         const btn = e.target.querySelector('button[type="submit"]');
+         btn.disabled = false;
+         btn.textContent = 'Submit for Approval';
+      }
+    }
+
+    async function loadNotifications(userId) {
+       try {
+         const notifs = await getMyNotifications(userId);
+         const container = document.getElementById('notificationsList');
+         container.innerHTML = '';
+         
+         if (!notifs || notifs.length === 0) {
+            container.innerHTML = '<div class="list-item" style="color: var(--text-muted); justify-content: center;">No new comms.</div>';
+            return;
+         }
+         
+         notifs.forEach(n => {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.style.flexDirection = 'column';
+            div.style.alignItems = 'flex-start';
+            div.style.gap = '5px';
+            
+            const date = new Date(n.created_at).toLocaleDateString();
+            div.innerHTML = `
+               <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-blue);">${escapeHTML(n.type)} • ${date}</div>
+               <div style="font-size: 0.9rem; color: var(--text-primary); margin-top: 4px;">${escapeHTML(n.message)}</div>
+               ${n.link ? `<a href="${escapeHTML(n.link)}" style="font-size: 0.8rem; color: var(--accent-cyan); text-decoration: underline; margin-top: 4px;">View Details</a>` : ''}
+            `;
+            container.appendChild(div);
+         });
+       } catch (e) {
+         console.error(e);
+       }
+    }
+
+    async function loadLeaderboard() {
+       try {
+         const leaders = await getLeaderboard();
+         const container = document.getElementById('leaderboardList');
+         container.innerHTML = '';
+         
+         if (!leaders || leaders.length === 0) {
+            container.innerHTML = '<div class="list-item" style="color: var(--text-muted); justify-content: center;">No data available.</div>';
+            return;
+         }
+         
+         leaders.forEach((l, index) => {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `
+               <div style="display: flex; align-items: center; gap: 15px;">
+                  <div style="font-family: var(--font-mono); font-size: 1.2rem; font-weight: bold; width: 20px; text-align: center; color: ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? '#cd7f32' : 'var(--text-muted)'};">${index + 1}</div>
+                  <div>
+                     <div class="mission-title">${escapeHTML(l.callsign)} ${l.identifier ? escapeHTML(l.identifier) : ''}</div>
+                     <div style="font-size: 0.8rem; color: var(--text-secondary);">Level ${l.level} • ${escapeHTML(l.division || 'Unassigned')}</div>
+                  </div>
+               </div>
+               <div class="mission-xp">${l.xp} XP</div>
+            `;
+            container.appendChild(div);
+         });
+       } catch (e) {
+         console.error(e);
+       }
+    }
+
+    async function handleSignOut() {
+      await signOut();
+    }
+
+    initDashboard();
+  </script>
+</body>
+</html>

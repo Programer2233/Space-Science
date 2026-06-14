@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Research Hub — Access the complete archive of scientific papers and discoveries from the Space Science Club.">
+  <title>Research Hub | Space Science Club</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/research.css">
+  <link rel="icon" href="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabaseClient.js"></script>
+</head>
+
+<body class="research-hub-body">
+
+  <!-- Interactive Star Canvas -->
+  <canvas id="star-canvas"></canvas>
+
+  <!-- ======== NAVIGATION (Shared with Home) ======== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon">
+          <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+        </span>
+        Space Science
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="index.html#about">About</a>
+        <a href="research.html" class="active">Research</a>
+        <a href="index.html#missions">Missions</a>
+        <a href="index.html#team">Team</a>
+        <a href="index.html#events">Events</a>
+        <a href="blog.html">Blog</a>
+        <a href="index.html#contact">Contact</a>
+        <a href="login.html" class="nav-login-link"
+          style="margin-left: 20px; color: var(--accent-blue); font-family: var(--font-mono); font-size: 0.8rem; text-decoration: none; border: 1px solid rgba(74, 158, 255, 0.3); padding: 5px 15px; border-radius: 20px;">Access
+          Dashboard</a>
+      </div>
+      <button class="nav-cta" onclick="window.location.href='enlist.html'">Join Us</button>
+    </div>
+  </nav>
+
+  <!-- ======== ARCHIVE HERO ======== -->
+  <header class="archive-hero">
+    <div class="container">
+      <span class="section-eyebrow">Academic Archive</span>
+      <h1 class="section-title">
+        <span class="outline-text">Research</span>
+        <span class="bold-text"> Hub</span>
+      </h1>
+      <p class="section-subtitle">Our digital library containing peer-reviewed studies,
+        project logs,
+        and scientific discoveries conducted by our members.</p>
+
+      <div class="archive-stats reveal">
+        <span><b>24</b> Active Papers</span>
+        <span><b>08</b> Mission Logs</span>
+        <span><b>12</b> Peer Reviews</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======== FILTER BAR ======== -->
+  <section class="filter-bar">
+    <div class="container">
+      <div class="filter-wrapper">
+        <div class="search-box">
+          <span class="icon">🔍</span>
+          <input type="text" placeholder="Search the nebula for keywords, authors, or IDs..." id="hubSearch">
+        </div>
+        <div class="category-nav">
+          <button class="category-btn active">All Fields</button>
+          <button class="category-btn">Astrophysics</button>
+          <button class="category-btn">Cosmology</button>
+          <button class="category-btn">Rocketry</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FEATURED RESEARCH ======== -->
+  <section class="prime-feature reveal">
+    <div class="container">
+      <div class="feature-layout" id="featureLayout">
+        <!-- Javascript will populate the newest featured paper here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== MAIN ARCHIVE GRID ======== -->
+  <section class="archive-main">
+    <div class="container">
+      <div class="archive-grid">
+
+        <!-- Paper 1 -->
+        <article class="paper-node reveal">
+          <span class="research-card-tag">ASTROPHYSICS</span>
+          <h3>Spectral Analysis of Red Dwarf Stars in the Proxima Centauri System</h3>
+          <p>Implications for habitable exoplanet detection based on M-type dwarf star emissions.</p>
+          <div class="paper-meta">
+            <div class="author">
+              <span>A. Kimani</span>
+            </div>
+            <div class="paper-actions">
+              <a href="#" class="action-icon" title="View Abstract">👁️</a>
+              <a href="#" class="action-icon" title="Download Paper">📥</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Paper 2 -->
+        <article class="paper-node reveal">
+          <span class="research-card-tag">COSMOLOGY</span>
+          <h3>Dark Matter Distribution Models in Local Galaxy Clusters</h3>
+          <p>N-body simulations and their correlation with observed gravitational lensing effects.</p>
+          <div class="paper-meta">
+            <div class="author">
+              <span>N. Mwangi</span>
+            </div>
+            <div class="paper-actions">
+              <a href="#" class="action-icon" title="View Abstract">👁️</a>
+              <a href="#" class="action-icon" title="Download Paper">📥</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Paper 3 -->
+        <article class="paper-node reveal">
+          <span class="research-card-tag">PLANETARY</span>
+          <h3>Atmospheric Composition of Titan: Organic Chemistry Pathways</h3>
+          <p>Analysis of Cassini–Huygens data revealing complex organic molecules in Titan's upper atmosphere.</p>
+          <div class="paper-meta">
+            <div class="author">
+              <span>S. Ochieng</span>
+            </div>
+            <div class="paper-actions">
+              <a href="#" class="action-icon" title="View Abstract">👁️</a>
+              <a href="#" class="action-icon" title="Download Paper">📥</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Paper 4 (New Template) -->
+        <article class="paper-node reveal">
+          <span class="research-card-tag">ENGINEERING</span>
+          <h3>Ion Thruster Efficiency in Low Earth Orbit: A Comparative Study</h3>
+          <p>Evaluating xenon vs. krypton propellants for small-scale satellite station-keeping.</p>
+          <div class="paper-meta">
+            <div class="author">
+              <span>L. Walker</span>
+            </div>
+            <div class="paper-actions">
+              <a href="#" class="action-icon" title="View Abstract">👁️</a>
+              <a href="#" class="action-icon" title="Download Paper">📥</a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== SUBMISSION NEXUS ======== -->
+  <section class="submit-nexus">
+    <div class="container">
+      <div class="nexus-card reveal">
+        <h2 class="section-title">Ready to <span class="accent-text">Publish?</span></h2>
+        <p class="section-subtitle" style="margin: 0 auto 30px;">Join our collective of researchers. Submit your paper
+          for peer review by our academic board.</p>
+        <a href="index.html#contact" class="btn-primary" style="display: inline-flex; text-decoration: none;">Submit
+          Mission Data 🚀</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FOOTER (Shared) ======== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="logo-icon">
+              <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+            </span>
+            Space Science
+          </a>
+          <p>Exploring the cosmos through research, projects, and shared curiosity about the universe.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigate</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="research.html">Research</a></li>
+            <li><a href="index.html#events">Events</a></li>
+            <li><a href="index.html#blog">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="index.html#missions">Missions</a></li>
+            <li><a href="index.html#about">About</a></li>
+            <li><a href="index.html#contact">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Space Science Club. All rights reserved.</span>
+        <span>Observing the Infinite.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+  <script src="js/interactions.js"></script>
+  <script src="js/research.js"></script>
+</body>
+
+</html>

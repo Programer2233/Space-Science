@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Space Science Blog — Dispatches from the cosmos, mission updates, and scientific deep-dives.">
+  <title>Blog | Space Science Club</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/research.css">
+  <link rel="icon" href="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabaseClient.js"></script>
+</head>
+<body class="research-hub-body">
+
+  <canvas id="star-canvas"></canvas>
+
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon">
+          <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+        </span>
+        Space Science
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="index.html#about">About</a>
+        <a href="research.html">Research</a>
+        <a href="index.html#missions">Missions</a>
+        <a href="index.html#team">Team</a>
+        <a href="index.html#events">Events</a>
+        <a href="blog.html" class="active">Blog</a>
+        <a href="index.html#contact">Contact</a>
+        <a href="login.html" class="nav-login-link" style="margin-left: 20px; color: var(--accent-blue); font-family: var(--font-mono); font-size: 0.8rem; text-decoration: none; border: 1px solid rgba(74, 158, 255, 0.3); padding: 5px 15px; border-radius: 20px;">Access Dashboard</a>
+      </div>
+      <button class="nav-cta" onclick="window.location.href='enlist.html'">Join Us</button>
+    </div>
+  </nav>
+
+  <header class="archive-hero" style="padding-top: 180px; padding-bottom: 100px;">
+    <div class="hero-glow" id="hero-glow" style="top: 20%; left: 50%; opacity: 0.4;"></div>
+    <div class="container">
+      <span class="section-eyebrow">Recent Articles</span>
+      <h1 class="section-title">
+        <span class="outline-text">The</span>
+        <span class="accent-text"> Blog</span>
+      </h1>
+      <p class="section-subtitle" style="margin: 0 auto; max-width: 700px;">Dispatches from the final frontier: mission logs, scientific breakthroughs, and deep-space insights from the Space Science community.</p>
+    </div>
+  </header>
+
+  <section class="filter-bar">
+    <div class="container">
+      <div class="filter-wrapper">
+        <div class="search-box">
+          <span class="icon">🔍</span>
+          <input type="text" placeholder="Search dispatches..." id="blogSearch">
+        </div>
+        <div class="category-nav">
+          <button class="category-btn active">All Topics</button>
+          <button class="category-btn">Deep Space</button>
+          <button class="category-btn">Astrophysics</button>
+          <button class="category-btn">Mars Exploration</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="prime-feature reveal" id="featuredBlogSection">
+    <div class="container">
+      <div class="feature-layout" id="blogFeatureLayout">
+        <!-- Javascript will populate the newest featured blog here -->
+      </div>
+    </div>
+  </section>
+
+  <section class="archive-main">
+    <div class="container">
+      <div class="archive-grid" id="blogGrid">
+        <!-- Javascript will populate the rest of the blogs -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog Reader Modal -->
+  <div class="blog-modal" id="blogModal">
+    <div class="blog-modal-content">
+      <div class="reading-progress-bar" id="readingProgress"></div>
+      <button class="modal-close" id="closeModal">&times;</button>
+      <div class="modal-header">
+        <h2 id="modalTitle" class="section-title" style="font-size: 2rem; margin-bottom: 5px;">Dispatch Title</h2>
+        <div class="modal-meta" id="modalMeta">By Author | April 2026</div>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Content injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="logo-icon">
+              <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+            </span>
+            Space Science
+          </a>
+          <p>Exploring the cosmos through research, projects, and shared curiosity about the universe.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigate</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="research.html">Research</a></li>
+            <li><a href="blog.html">Blog</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Space Science Club. All rights reserved.</span>
+        <span>Observing the Infinite.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+  <script src="js/interactions.js"></script>
+  <script src="js/blog.js"></script>
+</body>
+</html>

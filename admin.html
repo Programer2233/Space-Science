@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>High Command | Space Science Club</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    /* Native Dashboard Layout */
+    body {
+      background-color: var(--bg-primary);
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      color: white;
+      font-family: var(--font-body);
+    }
+    
+    .admin-sidebar {
+      width: 260px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-glass);
+      backdrop-filter: blur(20px);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    .admin-sidebar .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    
+    .admin-sidebar .logo img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      text-align: left;
+      padding: 15px 20px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all 0.3s;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      background: rgba(6, 214, 160, 0.1);
+      color: var(--accent-cyan);
+      box-shadow: inset 4px 0 0 var(--accent-cyan);
+    }
+    
+    .nav-btn.logout {
+      margin-top: auto;
+      color: #ff4d4d;
+    }
+    .nav-btn.logout:hover {
+      background: rgba(255, 77, 77, 0.1);
+      box-shadow: inset 4px 0 0 #ff4d4d;
+      color: #ff4d4d;
+    }
+
+    .admin-main {
+      flex: 1;
+      padding: 50px;
+      overflow-y: auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .admin-header-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      margin-bottom: 5px;
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .admin-subtitle {
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      margin-bottom: 50px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .status-badge {
+      background: rgba(6, 214, 160, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid var(--accent-cyan);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+    }
+
+    .section-view {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .section-view.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 30px;
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-glass);
+      padding: 15px 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+    .stat-row:last-child { border-bottom: none; }
+
+    .input-field {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-glass);
+      padding: 12px;
+      border-radius: var(--radius-md);
+      color: white;
+      font-family: var(--font-body);
+      margin-bottom: 20px;
+    }
+    
+    .input-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+    }
+    
+    /* Login Overlay Styles */
+    .admin-login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(20px);
+    }
+  </style>
+</head>
+<body style="display: none;">
+  <!-- Star Canvas -->
+  <canvas id="star-canvas" style="position: fixed; inset: 0; z-index: 1; pointer-events: none;"></canvas>
+  
+  <!-- Admin Login Overlay -->
+  <div class="admin-login-overlay" id="adminLoginOverlay" style="display: none;">
+    <div class="glass-card" style="width: 100%; max-width: 450px; text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 20px;">🔒</div>
+      <h2 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 10px;">High Command</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 30px;">Authorized Access Only.</p>
+      
+      <div id="adminAuthError" style="display: none; background: rgba(255, 77, 77, 0.1); color: #ff4d4d; padding: 10px; border-radius: var(--radius-md); margin-bottom: 20px; font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid #ff4d4d;"></div>
+      
+      <form id="adminLoginForm" style="text-align: left;">
+        <label class="input-label">ADMIN COMM-LINK</label>
+        <input type="email" id="adminEmail" class="input-field" required placeholder="admin@nexus.com">
+        
+        <label class="input-label">ACCESS KEY</label>
+        <input type="password" id="adminPassword" class="input-field" required placeholder="••••••••">
+        
+        <button type="submit" id="adminLoginBtn" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">ESTABLISH SECURE UPLINK</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="logo">
+      <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="Logo">
+      <span>High Command</span>
+    </div>
+    
+    <button class="nav-btn active" onclick="switchTab('overview')">⚡ System Status</button>
+    <button class="nav-btn" onclick="switchTab('review')">🔬 Review Queue</button>
+    <button class="nav-btn" onclick="switchTab('recruits')">👥 Recruit Manifest</button>
+    <button class="nav-btn" onclick="switchTab('upload')">📡 Direct Archive</button>
+    <button class="nav-btn" onclick="switchTab('fieldReports')">📝 Field Reports</button>
+    <button class="nav-btn" onclick="switchTab('broadcast')">📢 Broadcast Center</button>
+    
+    <button class="nav-btn logout" onclick="handleAdminSignOut()">🚪 Terminate Uplink</button>
+  </aside>
+
+  <!-- Main Area -->
+  <main class="admin-main">
+    <h1 class="admin-header-title">Command Console</h1>
+    <p class="admin-subtitle">
+      <span>Sector 7 Monitoring // Global Authority Level 5</span>
+      <span class="status-badge">HQ SYSTEM ONLINE</span>
+    </p>
+
+    <!-- Overview -->
+    <div id="overviewView" class="section-view active">
+      <div class="dashboard-grid">
+        <div class="glass-card">
+          <h3 style="margin-bottom: 20px; font-family: var(--font-display);">System Diagnostics</h3>
+          <div class="stat-row">
+            <span>Database Uplink</span>
+            <span style="color: var(--accent-cyan);">ACTIVE</span>
+          </div>
+          <div class="stat-row">
+            <span>Enlistment Frequency</span>
+            <span id="recruitStats" style="color: var(--accent-cyan);">POLLING...</span>
+          </div>
+          <div class="stat-row">
+            <span>Pending Reviews</span>
+            <span id="reviewStats" style="color: #ff4d4d;">POLLING...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Queue -->
+    <div id="reviewView" class="section-view">
+      <h2 style="font-family: var(--font-display); margin-bottom: 30px;">Scientific Review Queue</h2>
+      <div id="reviewList" class="dashboard-grid">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- Direct Archive (Upload) -->
+    <div id="uploadView" class="section-view">
+      <div class="glass-card" style="max-width: 800px; margin: 0 auto;">
+        <h2 style="font-family: var(--font-display); margin-bottom: 30px;">Direct Research Archive</h2>
+        <form id="researchForm">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <label class="input-label">Paper Title</label>
+              <input type="text" id="pTitle" class="input-field" required>
+            </div>
+            <div>
+              <label class="input-label">Category</label>
+              <select id="pCategory" class="input-field">
+                <option value="ASTROPHYSICS">Astrophysics</option>
+                <option value="COSMOLOGY">Cosmology</option>
+                <option value="PLANETARY">Planetary Science</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <label class="input-label">Author</label>
+              <input type="text" id="pAuthor" class="input-field" required>
+            </div>
+            <div>
+              <label class="input-label">PDF Payload</label>
+              <input type="file" id="pFile" class="input-field" accept=".pdf" required>
+            </div>
+          </div>
+          <div>
+            <label class="input-label">Abstract / Mission Summary</label>
+            <textarea id="pDesc" class="input-field" rows="4" required></textarea>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">UPLINK TO HUB</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Recruit Manifest -->
+    <div id="recruitsView" class="section-view">
+      <h2 style="font-family: var(--font-display); margin-bottom: 30px;">Recruit Manifest</h2>
+      <div id="recruitList" class="dashboard-grid">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+
+    <!-- Field Reports -->
+    <div id="fieldReportsView" class="section-view">
+      <h2 style="font-family: var(--font-display); margin-bottom: 30px;">Field Reports</h2>
+      
+      <h3 style="color:var(--text-secondary); margin-bottom:15px; border-bottom:1px solid var(--border-glass); padding-bottom:10px;">Pending Reports</h3>
+      <div id="pendingFieldReportList" class="dashboard-grid">
+        <!-- Injected via JS -->
+      </div>
+
+      <h3 style="color:var(--text-secondary); margin-top:40px; margin-bottom:15px; border-bottom:1px solid var(--border-glass); padding-bottom:10px;">Archived Reports</h3>
+      <div id="archivedFieldReportList" class="dashboard-grid">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- Broadcast Center -->
+    <div id="broadcastView" class="section-view">
+      <div class="dashboard-grid">
+        <div class="glass-card">
+          <h3 style="margin-bottom: 25px; font-family: var(--font-display);">Dispatch New Blog</h3>
+          <form id="blogForm">
+            <label class="input-label">Headline</label>
+            <input type="text" id="bTitle" class="input-field" required>
+            
+            <label class="input-label">Content Payload</label>
+            <textarea id="bContent" class="input-field" rows="8" required></textarea>
+            
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">BROADCAST DISPATCH</button>
+          </form>
+        </div>
+        
+        <div class="glass-card">
+          <h3 style="margin-bottom: 25px; font-family: var(--font-display);">Mission Nexus Update</h3>
+          <form id="eventForm">
+            <label class="input-label">Mission Title</label>
+            <input type="text" id="eTitle" class="input-field" required>
+            
+            <label class="input-label">Date / Time</label>
+            <input type="text" id="eDate" class="input-field" placeholder="e.g. 2026-05-12 18:00" required>
+            
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">SYNCHRONIZE MISSION</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentUser = null;
+
+    async function initAdmin() {
+      // Require admin role, but disable auto-redirect so we can show the local login
+      const user = await requireAuth(['admin'], false);
+
+      if (!user) {
+        document.body.style.display = 'flex';
+        document.getElementById('adminLoginOverlay').style.display = 'flex';
+        return;
+      }
+
+      currentUser = user;
+      document.body.style.display = 'flex';
+      document.getElementById('adminLoginOverlay').style.display = 'none';
+
+      loadReviewQueue();
+      loadRecruits();
+      loadFieldReports();
+    }
+
+    // Initialize immediately
+    initAdmin();
+
+    // Tab Switching
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
+      
+      const btn = document.querySelector(`.nav-btn[onclick*="${tab}"]`);
+      if (btn) btn.classList.add('active');
+      
+      document.getElementById(`${tab}View`).classList.add('active');
+    }
+
+    // Login logic
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const errorEl = document.getElementById('adminAuthError');
+      const btn = document.getElementById('adminLoginBtn');
+
+      errorEl.style.display = 'none';
+      btn.textContent = 'AUTHENTICATING...';
+      btn.disabled = true;
+
+      try {
+        await signIn(email, password);
+        const user = await getCurrentUser();
+        if (getUserRole(user) !== 'admin') {
+          await supabaseClient.auth.signOut();
+          throw new Error("Access Denied: You do not have High Command clearance.");
+        }
+        window.location.reload();
+      } catch (err) {
+        errorEl.textContent = '✖ ' + (err.message || 'Authentication failed');
+        errorEl.style.display = 'block';
+        btn.textContent = 'ESTABLISH SECURE UPLINK';
+        btn.disabled = false;
+      }
+    });
+
+    
+
+    // Review Queue Logic
+    async function loadReviewQueue() {
+      const [subRes, recRes] = await Promise.all([
+        supabaseClient.from('submissions').select('*').eq('status', 'pending'),
+        supabaseClient.from('enlistments').select('user_id, callsign, commlink')
+      ]);
+
+      if (subRes.error) {
+        document.getElementById('reviewList').innerHTML = '<p style="color:#ff4d4d">SUBMISSION UPLINK ERROR</p>';
+        return;
+      }
+
+      const recruitMap = {};
+      const emailMap = {};
+      if (recRes.data) {
+        recRes.data.forEach(r => {
+          recruitMap[r.user_id] = r.callsign;
+          emailMap[r.user_id] = r.commlink;
+        });
+      }
+
+      const list = document.getElementById('reviewList');
+      const stats = document.getElementById('reviewStats');
+      const data = subRes.data;
+
+      list.innerHTML = '';
+      if (!data || data.length === 0) {
+        list.innerHTML = '<p style="color:var(--text-dim)">Uplink clear. No pending data.</p>';
+        stats.textContent = '0 PENDING';
+        return;
+      }
+
+      stats.textContent = `${data.length} PENDING`;
+      data.forEach(sub => {
+        const authorName = recruitMap[sub.author_id] || emailMap[sub.author_id] || 'New Recruit';
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:15px;">
+            <div>
+              <h4 style="margin:0; font-family: var(--font-display);">${escapeHTML(sub.title)}</h4>
+              <span style="font-size:0.7rem; color:var(--text-dim);">By: ${escapeHTML(authorName)}</span>
+            </div>
+            <span class="status-badge" style="color: #ff4d4d; border-color: #ff4d4d; background: rgba(255, 77, 77, 0.1);">PENDING</span>
+          </div>
+          <p style="font-size:0.8rem; margin-bottom:15px; color: var(--text-secondary);">${escapeHTML(sub.abstract).substring(0, 100)}...</p>
+          <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <a href="${sub.pdf_url}" target="_blank" class="btn-primary" style="padding:5px 10px; font-size:0.7rem; text-decoration: none;">VIEW PAYLOAD</a>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn-primary" style="padding:8px 15px; font-size:0.7rem;" onclick="approveSub('${sub.id}', '${sub.author_id}')">APPROVE</button>
+            <button class="btn-primary" style="padding:8px 15px; font-size:0.7rem; background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d;" onclick="rejectSub('${sub.id}', '${sub.author_id}')">REJECT</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    window.approveSub = async (id, authorId) => {
+      try {
+        const { data: sub, error: subError } = await supabaseClient.from('submissions').select('*').eq('id', id).single();
+        if (subError) throw subError;
+
+        const { data: profile } = await supabaseClient.from('enlistments').select('callsign, identifier, commlink').eq('user_id', authorId).single();
+        let authorName = profile ? (profile.callsign ? `${profile.callsign} ${profile.identifier || ''}` : profile.commlink) : 'Unknown Recruit';
+
+        const { error: insertError } = await supabaseClient.from('papers').insert([{
+          title: sub.title,
+          description: sub.abstract,
+          author: authorName,
+          category: 'RESEARCH',
+          pdf_url: sub.pdf_url,
+          date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          published_at: new Date().toISOString()
+        }]);
+        if (insertError) throw insertError;
+
+        await supabaseClient.from('submissions').update({ status: 'approved' }).eq('id', id);
+        showToast('Data integrated: Research paper has been archived and published.', 'success');
+        loadReviewQueue();
+      } catch (err) {
+        showToast('Approval failed: ' + (err.message || 'Transmission anomaly encountered.'), 'error');
+      }
+    };
+
+    window.rejectSub = async (id, authorId) => {
+      const reason = prompt('State reason for data rejection (this will be sent to the recruit):');
+      if (!reason) return;
+
+      try {
+        await supabaseClient.from('submissions').update({ status: 'rejected', rejection_reason: reason }).eq('id', id);
+        showToast('Recruit notified of data rejection.', 'success');
+        loadReviewQueue();
+      } catch (err) {
+        showToast('Rejection failed: ' + (err.message || 'Database link unstable.'), 'error');
+      }
+    };
+
+    // Recruit Manifest
+    async function loadRecruits() {
+      const data = await getEnlistments();
+      const list = document.getElementById('recruitList');
+      const stats = document.getElementById('recruitStats');
+
+      list.innerHTML = '';
+      if (!data) return;
+
+      stats.textContent = `${data.length} TOTAL`;
+      data.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'glass-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <h4 style="margin:0; font-family: var(--font-display);">${escapeHTML(r.callsign)}</h4>
+            <span class="status-badge" style="color:${r.status === 'approved' ? 'var(--accent-cyan)' : '#ff4d4d'}; border-color:${r.status === 'approved' ? 'var(--accent-cyan)' : '#ff4d4d'}">${r.status.toUpperCase()}</span>
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:20px;">Division: ${escapeHTML(r.division)}</p>
+          <div style="display:flex; gap:10px;">
+            ${r.status === 'pending' ? `<button class="btn-primary" style="padding:8px 15px; font-size:0.7rem;" onclick="approveRec('${r.id}', '${r.commlink}', '${escapeHTML(r.callsign)}')">APPROVE</button>
+            <button class="btn-primary" style="padding:8px 15px; font-size:0.7rem; background: #ff4d4d; border-color: #ff4d4d;" onclick="rejectRec('${r.id}', '${r.commlink}', '${escapeHTML(r.callsign)}')">REJECT</button>` : ''}
+            <button class="btn-primary" style="padding:8px 15px; font-size:0.7rem; background: transparent; border: 1px solid var(--border-glass);" onclick="window.open('mailto:${r.commlink}')">CONTACT</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    window.approveRec = async (id, commlink, callsign) => {
+      try {
+        await supabaseClient.from('enlistments').update({ status: 'approved' }).eq('id', id);
+        
+        await supabaseClient.functions.invoke('send-email', {
+          body: {
+            to: commlink,
+            subject: 'Space Science Club - Clearance Approved',
+            html: `<div style="font-family: sans-serif; color: #333;">
+              <h2>Clearance Granted, ${callsign}</h2>
+              <p>Your application to the Space Science Club has been approved.</p>
+              <p>You may now access your Mission Control dashboard.</p>
+            </div>`
+          }
+        });
+        
+        showToast('Security Clearance Granted & Email Sent.', 'success');
+        loadRecruits();
+      } catch (err) {
+        showToast('Approval failed: ' + err.message, 'error');
+      }
+    };
+
+    window.rejectRec = async (id, commlink, callsign) => {
+      const reason = prompt('State reason for rejection (this will be emailed to the recruit):');
+      if (reason === null) return;
+      try {
+        await supabaseClient.from('enlistments').update({ status: 'rejected', rejection_reason: reason }).eq('id', id);
+        
+        await supabaseClient.functions.invoke('send-email', {
+          body: {
+            to: commlink,
+            subject: 'Space Science Club - Application Status',
+            html: `<div style="font-family: sans-serif; color: #333;">
+              <h2>Application Update, ${callsign}</h2>
+              <p>We have reviewed your application to the Space Science Club.</p>
+              <p>Unfortunately, your application has been rejected at this time.</p>
+              ${reason ? `<p><strong>Reason provided:</strong> ${reason}</p>` : ''}
+            </div>`
+          }
+        });
+        
+        showToast('Application Rejected & Email Sent.', 'success');
+        loadRecruits();
+      } catch (err) {
+        showToast('Rejection failed: ' + err.message, 'error');
+      }
+    };
+
+    // Field Reports
+    async function loadFieldReports() {
+      try {
+        const [updatesRes, projectsRes, usersRes] = await Promise.all([
+          supabaseClient.from('mission_updates').select('*').order('created_at', { ascending: false }),
+          supabaseClient.from('user_projects').select('id, title'),
+          supabaseClient.from('enlistments').select('user_id, commlink, rejection_reason')
+        ]);
+
+        if (updatesRes.error) throw updatesRes.error;
+
+        const rewardedSet = new Set();
+        const projectMap = {};
+        if (projectsRes.data) projectsRes.data.forEach(p => projectMap[p.id] = p.title);
+
+        const userMap = {};
+        if (usersRes.data) {
+          usersRes.data.forEach(u => {
+            userMap[u.user_id] = u.commlink;
+            // Decode rewarded items from unused rejection_reason column
+            if (u.rejection_reason && u.rejection_reason.startsWith('REWARDS:')) {
+              u.rejection_reason.replace('REWARDS:', '').split(',').forEach(id => rewardedSet.add(id));
+            }
+          });
+        }
+
+        const pendingList = document.getElementById('pendingFieldReportList');
+        const archivedList = document.getElementById('archivedFieldReportList');
+        pendingList.innerHTML = '';
+        archivedList.innerHTML = '';
+        const data = updatesRes.data;
+
+        if (!data || data.length === 0) {
+          pendingList.innerHTML = '<p style="color:var(--text-dim)">No field reports received yet.</p>';
+          return;
+        }
+
+        data.forEach(update => {
+          const card = document.createElement('div');
+          card.className = 'glass-card';
+          
+          const isRewarded = update.is_rewarded || rewardedSet.has(String(update.id));
+          
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+              <h4 style="margin:0; color:var(--accent-cyan); font-family: var(--font-display);">${projectMap[update.project_id] || 'Standalone Update'}</h4>
+              <span style="font-size:0.65rem; color:var(--text-dim);">${new Date(update.created_at).toLocaleDateString()}</span>
+            </div>
+            <p style="font-size:0.85rem; margin-bottom:15px; color: var(--text-secondary);">"${escapeHTML(update.update_text)}"</p>
+            ${update.image_url ? `<img src="${update.image_url}" style="width:100%; border-radius:8px; margin-bottom:15px; border:1px solid var(--border-glass);">` : ''}
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; color:var(--text-dim);">By: ${escapeHTML(userMap[update.user_id] || 'Recruit')}</span>
+              ${!isRewarded ? `<button class="btn-primary" style="padding:5px 10px; font-size:0.7rem;" onclick="this.disabled=true; this.textContent='APPROVING...'; rewardProjectXP('${update.id}', '${update.user_id}', 50)">APPROVE +50 XP</button>` : '<span style="font-size:0.7rem; color:var(--accent-cyan);">✓ REWARDED</span>'}
+            </div>
+          `;
+          
+          if (isRewarded) {
+            archivedList.appendChild(card);
+          } else {
+            pendingList.appendChild(card);
+          }
+        });
+        
+        if (pendingList.children.length === 0) pendingList.innerHTML = '<p style="color:var(--text-dim)">All pending reports have been processed.</p>';
+        if (archivedList.children.length === 0) archivedList.innerHTML = '<p style="color:var(--text-dim)">No archived reports yet.</p>';
+        
+      } catch (_err) {}
+    }
+
+    window.rewardProjectXP = async (updateId, userId, xpAmount) => {
+      try {
+        await updateXP(userId, xpAmount);
+        
+        // Track the reward in the user's enlistment record using unused rejection_reason column
+        const { data: profile } = await supabaseClient.from('enlistments').select('id, rejection_reason').eq('user_id', userId).single();
+        if (profile) {
+            let ids = [];
+            if (profile.rejection_reason && profile.rejection_reason.startsWith('REWARDS:')) {
+                ids = profile.rejection_reason.replace('REWARDS:', '').split(',');
+            }
+            if (!ids.includes(updateId)) {
+                ids.push(updateId);
+                await supabaseClient.from('enlistments').update({ rejection_reason: 'REWARDS:' + ids.join(',') }).eq('id', profile.id);
+            }
+        }
+        
+        // Notify user
+        await createNotification(userId, 'COMMENDATION', `HQ Approved your project update! +${xpAmount} XP`, `REWARDED_${updateId}`);
+        // Try updating table column too just in case it exists
+        await supabaseClient.from('mission_updates').update({ is_rewarded: true }).eq('id', updateId);
+        
+        showToast(`Commendation sent! +${xpAmount} XP awarded.`, 'success');
+        loadFieldReports();
+      } catch (err) {
+        showToast('Failed to award XP. ' + (err.message || JSON.stringify(err)), 'error');
+      }
+    };
+
+    // Forms
+    document.getElementById('blogForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'BROADCASTING...';
+      try {
+        await upsertBlogPost({
+          title: document.getElementById('bTitle').value,
+          content: document.getElementById('bContent').value,
+          author: 'High Command',
+          tag: 'NEWS',
+          description: document.getElementById('bContent').value.substring(0, 150) + '...',
+          date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        });
+        showToast('Broadcast Successful.', 'success');
+        e.target.reset();
+      } catch (err) { console.error("Blog Error:", err); showToast('Broadcast Failed', 'error'); }
+      btn.disabled = false;
+      btn.textContent = 'BROADCAST DISPATCH';
+    });
+
+    document.getElementById('eventForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'SYNCING...';
+      try {
+        await upsertEvent({
+          title: document.getElementById('eTitle').value,
+          date: document.getElementById('eDate').value,
+          location: 'Deep Space',
+          type: 'Classified Mission',
+          description: 'High Command Mission'
+        });
+        showToast('Mission Synchronized.', 'success');
+        e.target.reset();
+      } catch (err) { console.error("Event Error:", err); showToast('Sync Failed', 'error'); }
+      btn.disabled = false;
+      btn.textContent = 'SYNCHRONIZE MISSION';
+    });
+
+    document.getElementById('researchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'ESTABLISHING DATA UPLINK...';
+      try {
+        const file = document.getElementById('pFile').files[0];
+        if (!file) throw new Error('No PDF payload detected.');
+        const paperData = {
+          title: document.getElementById('pTitle').value,
+          description: document.getElementById('pDesc').value,
+          author: document.getElementById('pAuthor').value,
+          category: document.getElementById('pCategory').value,
+          date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        };
+        await handleAdminResearchUpload(paperData, file);
+        showToast('Research archive updated and synchronized.', 'success');
+        e.target.reset();
+      } catch (err) {
+        showToast('Upload failed: ' + (err.message || 'Unknown network error.'), 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'UPLINK TO HUB';
+      }
+    });
+
+    async function handleAdminSignOut() {
+      await signOut();
+    }
+  </script>
+  <script src="js/script.js"></script>
+</body>
+</html>

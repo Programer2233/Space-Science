@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Enlist in the Space Science Club. Gain security clearance, access mission logs, and participate in peer-reviewed research.">
+  <title>Member Application | Space Science Club</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/auth.js"></script>
+  
+  <style>
+    /* Prevent UI flicker - hide sections until loader handles it */
+    .enlistment-hero, .enlistment-section { opacity: 0; visibility: hidden; }
+    .loader-overlay:not(.hidden) ~ .enlistment-hero,
+    .loader-overlay:not(.hidden) ~ .enlistment-section { display: none; }
+
+    /* Enlistment Specific Styles */
+    .enlistment-hero {
+      padding: 150px 0 60px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .enlistment-split {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 60px;
+      margin-top: 40px;
+      margin-bottom: 80px;
+    }
+
+    @media (min-width: 992px) {
+      .enlistment-split {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .perk-badge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .perk-badge {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 25px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(10px);
+      transition: all var(--transition-smooth);
+    }
+
+    .perk-badge:hover {
+      transform: translateX(10px);
+      border-color: rgba(6, 214, 160, 0.4);
+      box-shadow: 0 0 20px rgba(6, 214, 160, 0.1);
+    }
+
+    .perk-icon {
+      font-size: 2rem;
+      background: rgba(6, 214, 160, 0.1);
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(6, 214, 160, 0.2);
+    }
+
+    .perk-content h4 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .perk-content p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .clearance-warning {
+      margin-top: 30px;
+      padding: 15px;
+      border-left: 4px solid var(--accent-pink);
+      background: rgba(199, 125, 255, 0.1);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .terminal-label {
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+    
+    .auth-input-wrapper {
+      position: relative;
+    }
+    
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+    }
+    
+    .password-toggle:hover {
+      color: var(--text-primary);
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 24px;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    .checkbox-group input {
+      margin-top: 4px;
+      cursor: pointer;
+    }
+    
+    .btn-submit.btn-cyan {
+      background: var(--accent-cyan);
+      color: #000;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .btn-submit.btn-cyan:hover {
+      box-shadow: 0 10px 30px rgba(6, 214, 160, 0.3);
+    }
+
+    .auth-error {
+      display: none;
+      background: rgba(255, 125, 255, 0.1);
+      color: var(--accent-pink);
+      padding: 15px;
+      border-radius: var(--radius-md);
+      margin-bottom: 25px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      border: 1px solid var(--accent-pink);
+    }
+    
+    .auth-success {
+      display: none;
+      background: rgba(6, 214, 160, 0.1);
+      color: var(--accent-cyan);
+      padding: 15px;
+      border-radius: var(--radius-md);
+      margin-bottom: 25px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      border: 1px solid var(--accent-cyan);
+    }
+    
+    .login-link-container {
+      text-align: center;
+      margin-top: 20px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+    
+    .login-link-container a {
+      color: var(--accent-blue);
+      font-weight: 500;
+    }
+    
+    .login-link-container a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ======== LOADING SCREEN ======== -->
+  <div class="loader-overlay" id="loader">
+    <div class="loader-content">
+      <div class="loader-logo">🚀</div>
+      <div class="loader-terminal">
+        <div class="terminal-line" data-delay="500">>> OPENING ENLISTMENT CHANNEL...</div>
+        <div class="terminal-line" data-delay="1200">>> VERIFYING CLEARANCE STATUS...</div>
+      </div>
+      <div class="loader-progress">
+        <div class="loader-progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Star Canvas -->
+  <canvas id="star-canvas"></canvas>
+
+  <!-- ======== NAVIGATION ======== -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon">
+          <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+        </span>
+        Space Science
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="index.html#about">About</a>
+        <a href="research.html">Research</a>
+        <a href="index.html#missions">Missions</a>
+        <a href="index.html#team">Team</a>
+        <a href="index.html#events">Events</a>
+        <a href="blog.html">Blog</a>
+        <a href="index.html#contact">Contact</a>
+        <a href="login.html" class="nav-login-link" style="margin-left: 20px; color: var(--accent-blue); font-family: var(--font-mono); font-size: 0.8rem; text-decoration: none; border: 1px solid rgba(74, 158, 255, 0.3); padding: 5px 15px; border-radius: 20px;">Access Dashboard</a>
+      </div>
+      <button class="nav-cta active" style="box-shadow: 0 0 15px var(--accent-cyan); border-color: var(--accent-cyan);">Join Now</button>
+    </div>
+  </nav>
+
+  <!-- ======== ENLISTMENT HERO ======== -->
+  <header class="enlistment-hero reveal">
+    <div class="container">
+      <span class="section-eyebrow" style="color: var(--accent-cyan); justify-content: center;">Member Registration</span>
+      <h1 class="section-title">
+        <span class="outline-text">Club</span>
+        <span class="bold-text">Membership</span>
+      </h1>
+      <p class="section-subtitle" style="margin: 0 auto;">Join our community to access project logs, contribute your own research, and stay updated with live space data.</p>
+    </div>
+  </header>
+
+  <!-- ======== ENLISTMENT LAYOUT ======== -->
+  <section class="enlistment-section">
+    <div class="container">
+      <div class="enlistment-split reveal">
+        
+        <!-- Left: Perks -->
+        <div class="enlistment-perks">
+          <h3 style="font-family: var(--font-mono); margin-bottom: 25px; color: var(--text-primary);">>> MEMBER BENEFITS</h3>
+          <div class="perk-badge-list">
+            
+            <div class="perk-badge">
+              <div class="perk-icon">📡</div>
+              <div class="perk-content">
+                <h4>Astro-Alerts</h4>
+                <p>Receive live notifications for ISS passes, satellite transits, and meteor showers visible from your current location.</p>
+              </div>
+            </div>
+
+            <div class="perk-badge">
+              <div class="perk-icon">📝</div>
+              <div class="perk-content">
+                <h4>Contribute to the Blog</h4>
+                <p>Draft and share your own discoveries, astrophotography captures, and observation notes with the club community.</p>
+              </div>
+            </div>
+
+            <div class="perk-badge">
+              <div class="perk-icon">🎓</div>
+              <div class="perk-content">
+                <h4>Academic Publishing</h4>
+                <p>Submit your formal research papers to our Hub and receive feedback from peers and experienced members.</p>
+              </div>
+            </div>
+
+            <div class="perk-badge">
+              <div class="perk-icon">🎖️</div>
+              <div class="perk-content">
+                <h4>Membership Status</h4>
+                <p>Advance your standing in the club by actively participating in projects, research, and community events.</p>
+              </div>
+            </div>
+
+            <div class="perk-badge">
+              <div class="perk-icon">🗄️</div>
+              <div class="perk-content">
+                <h4>Exclusive Resources</h4>
+                <p>Access high-resolution space imagery, raw scientific datasets, and early registration for all club activities.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="clearance-warning">
+            NOTE: All applications are reviewed by our committee to ensure a collaborative and academic environment for all members.
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div class="enlistment-form-container">
+          <form id="enlistForm" class="contact-form" style="border: 1px solid rgba(6, 214, 160, 0.3); box-shadow: 0 0 30px rgba(6, 214, 160, 0.05); padding: 40px; border-radius: var(--radius-lg); background: var(--bg-card); backdrop-filter: blur(10px);">
+            
+            <div id="authError" class="auth-error"></div>
+            <div id="authSuccess" class="auth-success"></div>
+
+            <div id="formFields">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="callsign" class="terminal-label">Callsign (First Name)</label>
+                  <input type="text" id="callsign" name="callsign" placeholder="e.g. Apollo" required>
+                </div>
+                <div class="form-group">
+                  <label for="identifier" class="terminal-label">Identifier (Last Name)</label>
+                  <input type="text" id="identifier" name="identifier" placeholder="e.g. 11" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="commlink" class="terminal-label">Comm-Link (Email Address)</label>
+                <input type="email" id="commlink" name="commlink" placeholder="transmission@relay.net" required>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="password" class="terminal-label">Access Key (6+ Chars)</label>
+                  <div class="auth-input-wrapper">
+                    <input type="password" id="password" name="password" placeholder="••••••••" minlength="6" required>
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)" tabindex="-1">👁️</button>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="confirmPassword" class="terminal-label">Confirm Key</label>
+                  <div class="auth-input-wrapper">
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" minlength="6" required>
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', this)" tabindex="-1">👁️</button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="division" class="terminal-label">Preferred Division</label>
+                <select id="division" name="division" style="background: rgba(5, 10, 24, 0.8); color: white; border: 1px solid var(--border-glass); padding: 15px; border-radius: var(--radius-sm); width: 100%;">
+                  <option value="astrophotography">Astrophotography & Observation</option>
+                  <option value="engineering">Hardware & Space Engineering</option>
+                  <option value="research">Academic Research & Theory</option>
+                  <option value="data">Data Analysis & Telemetry</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="background" class="terminal-label">Background Query</label>
+                <textarea id="background" name="background" placeholder="Why do you wish to join the collective?" required></textarea>
+              </div>
+              
+              <div class="checkbox-group">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">I agree to the Space Science Club code of conduct and confirm my data may be stored for club communication.</label>
+              </div>
+              
+              <button type="submit" id="submitBtn" class="btn-submit btn-cyan">
+                SUBMIT APPLICATION 🔓
+              </button>
+            </div>
+            
+            <div id="otpFields" style="display: none; text-align: center;">
+              <h4 style="color: var(--accent-cyan); font-family: var(--font-display); margin-bottom: 15px;">✓ TRANSMISSION SUCCESSFUL</h4>
+              <p style="margin-bottom: 20px; color: var(--text-secondary);">Enter the 8-digit confirmation code sent to your comm-link.</p>
+              <div class="form-group" style="text-align: left;">
+                <label for="otpCode" class="terminal-label">Verification Code</label>
+                <input type="text" id="otpCode" placeholder="00000000" maxlength="8" style="text-align: center; letter-spacing: 0.5em; font-family: var(--font-mono); font-size: 1.5rem;" class="input-field">
+              </div>
+              <button type="button" id="verifyOtpBtn" class="btn-submit btn-cyan" style="width: 100%;">
+                VERIFY CODE
+              </button>
+              <button type="button" id="resendOtpBtn" style="background: transparent; border: none; color: var(--accent-cyan); font-family: var(--font-mono); font-size: 0.8rem; margin-top: 15px; cursor: pointer; text-decoration: underline;">
+                Didn't receive a code? Resend
+              </button>
+            </div>
+            
+            <div id="loginLinkContainer" class="login-link-container">
+              Already have clearance? <a href="login.html">Login to Dashboard →</a>
+            </div>
+            
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FOOTER ======== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="nav-logo">
+            <span class="logo-icon">
+              <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+            </span>
+            Space Science
+          </a>
+          <p>Exploring the cosmos through research, projects, and shared curiosity about the universe.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigate</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="research.html">Research</a></li>
+            <li><a href="blog.html">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="index.html#missions">Missions</a></li>
+            <li><a href="index.html#about">About</a></li>
+            <li><a href="index.html#contact">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Space Science Club. All rights reserved.</span>
+        <span>Observing the Infinite.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+  <script>
+    // Check if user is already logged in
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await requireGuest();
+        // If guest, hide loader and show content
+        document.getElementById('loader').classList.add('hidden');
+        document.querySelectorAll('.enlistment-hero, .enlistment-section').forEach(el => {
+          el.style.opacity = '1';
+          el.style.visibility = 'visible';
+        });
+      } catch (e) {
+        console.error("Auth check error", e);
+        document.getElementById('loader').classList.add('hidden');
+      }
+    });
+
+    function togglePasswordVisibility(inputId, btnEl) {
+      const input = document.getElementById(inputId);
+      const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+      input.setAttribute('type', type);
+      btnEl.textContent = type === 'password' ? '👁️' : '🙈';
+    }
+
+    const form = document.getElementById('enlistForm');
+    const errorEl = document.getElementById('authError');
+    const successEl = document.getElementById('authSuccess');
+    const submitBtn = document.getElementById('submitBtn');
+    const formFields = document.getElementById('formFields');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const email = document.getElementById('commlink').value.trim();
+      const callsign = document.getElementById('callsign').value.trim();
+      const identifier = document.getElementById('identifier').value.trim();
+      
+      if (password !== confirmPassword) {
+        errorEl.textContent = '✖ ERROR: Access keys do not match.';
+        errorEl.style.display = 'block';
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+      
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'PROCESSING UPLINK... ⏳';
+      submitBtn.style.opacity = '0.7';
+      
+      try {
+        // 1. Sign up the user (Supabase handles the email verification sending)
+        const { data, error: signUpError } = await signUp(email, password, { callsign, identifier });
+        if (signUpError) throw signUpError;
+        const signedUser = data?.user ?? data?.session?.user;
+        if (signedUser) {
+          const formData = new FormData(form);
+          await createEnlistmentRecord(signedUser, formData);
+        } else {
+          // No user object yet; insert enlistment with email as identifier (user_id may be null)
+          const formData = new FormData(form);
+          // Directly insert into enlistments using Supabase client
+          const { error } = await supabaseClient.from('enlistments').insert([
+            {
+              user_id: null,
+              callsign: formData.get('callsign'),
+              identifier: formData.get('identifier'),
+              commlink: email,
+              division: formData.get('division') || '',
+              background: formData.get('background') || '',
+              status: 'pending',
+              level: 1,
+              xp: 0
+            }
+          ]);
+          if (error) {
+            console.error('Enlistment insertion fallback error:', error);
+          }
+        }
+        // Show success UI regardless of user object presence
+        formFields.style.display = 'none';
+        document.getElementById('otpFields').style.display = 'block';
+        document.getElementById('otpFields').scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (err) {
+        errorEl.textContent = '✖ ERROR: ' + (err.message || 'Transmission failed.');
+        errorEl.style.display = 'block';
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        submitBtn.style.opacity = '1';
+      }
+    });
+
+    document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
+      const otpCode = document.getElementById('otpCode').value.trim();
+      const email = document.getElementById('commlink').value.trim();
+      const btn = document.getElementById('verifyOtpBtn');
+      
+      if (otpCode.length !== 8) {
+        errorEl.textContent = '✖ ERROR: Code must be 8 digits.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      
+      errorEl.style.display = 'none';
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'VERIFYING... ⏳';
+      
+      try {
+        await verifyOtp(email, otpCode);
+        successEl.innerHTML = '<h4>✓ VERIFICATION COMPLETE</h4><p style="margin-top: 10px;">Clearance granted. Redirecting to dashboard...</p>';
+        successEl.style.display = 'block';
+        document.getElementById('otpFields').style.display = 'none';
+        setTimeout(() => {
+          window.location.href = 'recruit-dashboard.html';
+        }, 1500);
+      } catch (err) {
+        errorEl.textContent = '✖ ERROR: ' + (err.message || 'Verification failed.');
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
+
+    document.getElementById('resendOtpBtn').addEventListener('click', async () => {
+      const email = document.getElementById('commlink').value.trim();
+      const btn = document.getElementById('resendOtpBtn');
+      
+      btn.disabled = true;
+      btn.textContent = 'RESENDING... ⏳';
+      errorEl.style.display = 'none';
+      
+      try {
+        await resendOtp(email);
+        successEl.innerHTML = '<h4>✓ CODE RESENT</h4><p style="margin-top: 10px;">A new verification code has been sent to your comm-link.</p>';
+        successEl.style.display = 'block';
+        btn.textContent = 'Code Sent!';
+        setTimeout(() => { 
+          btn.textContent = "Didn't receive a code? Resend"; 
+          btn.disabled = false; 
+        }, 5000);
+      } catch (err) {
+        errorEl.textContent = '✖ ERROR: ' + (err.message || 'Failed to resend code.');
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = "Didn't receive a code? Resend";
+      }
+    });
+  </script>
+</body>
+</html>

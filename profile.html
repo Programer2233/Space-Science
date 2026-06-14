@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Observer Profile | Space Science Club</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    .profile-hero {
+      padding: 150px 0 60px;
+      text-align: center;
+      background: radial-gradient(circle at center, rgba(74, 158, 255, 0.1) 0%, transparent 70%);
+    }
+
+    .profile-card {
+      max-width: 800px;
+      margin: -60px auto 100px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      padding: 50px;
+      backdrop-filter: blur(20px);
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 50px;
+      position: relative;
+      z-index: 10;
+    }
+
+    @media (max-width: 768px) {
+      .profile-card { grid-template-columns: 1fr; text-align: center; }
+      .profile-avatar-large { margin: 0 auto; }
+    }
+
+    .profile-avatar-large {
+      width: 200px;
+      height: 200px;
+      background: var(--gradient-accent);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+      color: white;
+      font-family: var(--font-display);
+      border: 2px solid var(--accent-blue);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .p-stat {
+      background: rgba(255,255,255,0.03);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-glass);
+      text-align: center;
+    }
+
+    .p-stat .val { font-family: var(--font-display); font-size: 1.5rem; display: block; color: white; }
+    .p-stat .lbl { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+
+    .contribution-list {
+      margin-top: 40px;
+    }
+
+    .contribution-item {
+      padding: 15px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="star-canvas"></canvas>
+
+  <nav class="navbar scrolled">
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <span class="logo-icon"><img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC"></span>
+        Space Science
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="research.html">Research</a>
+        <a href="blog.html">Blog</a>
+      </div>
+      <a href="login.html" class="nav-cta">Dashboard</a>
+    </div>
+  </nav>
+
+  <header class="profile-hero">
+    <div class="container">
+      <span class="section-eyebrow" id="pDivision">Division</span>
+      <h1 class="section-title" id="pName">Explorer Name</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="profile-card reveal">
+      <div class="profile-avatar-large" id="pAvatar" style="overflow: hidden; position: relative;">
+        <span id="pAvatarInitials">?</span>
+        <img id="pAvatarImg" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+      </div>
+      <div class="profile-details">
+        <div style="font-family: var(--font-mono); color: var(--accent-blue); margin-bottom: 10px;">ID: <span id="pId">--</span></div>
+        <h2 style="color: white; margin-bottom: 15px;">Mission Specialist Rank</h2>
+        <p id="pBio" style="color: var(--text-secondary); line-height: 1.6;">Accessing member bio from deep space relay...</p>
+        
+        <div class="profile-stats">
+          <div class="p-stat">
+            <span class="val" id="pLevel">1</span>
+            <span class="lbl">Rank Level</span>
+          </div>
+          <div class="p-stat">
+            <span class="val" id="pXP">0</span>
+            <span class="lbl">Total XP</span>
+          </div>
+          <div class="p-stat">
+            <span class="val" id="pPapers">0</span>
+            <span class="lbl">Papers Cleared</span>
+          </div>
+        </div>
+
+        <div class="contribution-list">
+          <h3 style="color: white; margin-bottom: 20px; font-size: 1.1rem; font-family: var(--font-mono);">>> RECENT CONTRIBUTIONS</h3>
+          <div id="pContributions">
+            <p style="color: var(--text-muted); font-size: 0.8rem;">No public records found.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/script.js"></script>
+  <script>
+    async function initProfile() {
+      const params = new URLSearchParams(window.location.search);
+      const callsign = params.get('callsign');
+      if (!callsign) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Fetch user data from enlistments
+      const { data: user, error } = await supabaseClient
+        .from('enlistments')
+        .select('*')
+        .eq('callsign', callsign)
+        .single();
+
+      if (error || !user) {
+        document.body.innerHTML = '<div style="color:white; text-align:center; padding-top:100px;"><h1>404: EXPLORER NOT FOUND</h1><a href="index.html">Return to Earth</a></div>';
+        return;
+      }
+
+      // Populate UI
+      document.getElementById('pName').textContent = `${user.callsign} ${user.identifier}`;
+      document.getElementById('pDivision').textContent = user.division.toUpperCase();
+      
+      if (user.avatar_url) {
+        document.getElementById('pAvatarInitials').style.display = 'none';
+        const img = document.getElementById('pAvatarImg');
+        img.src = user.avatar_url;
+        img.style.display = 'block';
+      } else {
+        document.getElementById('pAvatarInitials').textContent = user.callsign.charAt(0);
+      }
+      
+      document.getElementById('pId').textContent = user.user_id ? user.user_id.substring(0, 12).toUpperCase() : 'PENDING';
+      document.getElementById('pLevel').textContent = user.level || 1;
+      document.getElementById('pXP').textContent = user.xp || 0;
+      document.getElementById('pBio').textContent = user.background || 'No bio provided.';
+
+      // Fetch papers
+      const { data: papers } = await supabaseClient
+        .from('papers')
+        .select('title, published_at')
+        .eq('author', `${user.callsign} ${user.identifier}`);
+      
+      document.getElementById('pPapers').textContent = papers ? papers.length : 0;
+      
+      if (papers && papers.length > 0) {
+        const list = document.getElementById('pContributions');
+        list.innerHTML = papers.map(p => {
+          const safeTitle = escapeHTML(p.title);
+          const safeDate = new Date(p.published_at).toLocaleDateString();
+          return '<div class="contribution-item">' +
+            '<div style="font-size: 0.9rem; font-weight: bold; color: white;">' + safeTitle + '</div>' +
+            '<div style="font-size: 0.7rem; color: var(--accent-cyan); font-family: var(--font-mono);">PUBLISHED: ' + safeDate + '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+
+    initProfile();
+  </script>
+</body>
+</html>

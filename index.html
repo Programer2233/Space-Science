@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Space Science Club — Explore the cosmos through research, events, and collaborative missions. Join our community of passionate space enthusiasts.">
+  <title>Space Science Club — Explore the Infinite</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png">
+  
+  <!-- Supabase SDK Location -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+
+<body>
+
+  <!-- ======== LOADING SCREEN ======== -->
+  <div class="loader-overlay" id="loader">
+    <div class="loader-content">
+      <div class="loader-logo">🚀</div>
+      <div class="loader-terminal">
+        <div class="terminal-line" data-delay="500">>> INITIALIZING SYSTEM ASSETS...</div>
+        <div class="terminal-line" data-delay="1200">>> LOADING INTERFACE COMPONENTS...</div>
+        <div class="terminal-line" data-delay="2000">>> SYNCING RESEARCH HUB DATA...</div>
+        <div class="terminal-line" data-delay="2800">>> SYSTEM READY.</div>
+      </div>
+      <div class="loader-progress">
+        <div class="loader-progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Star Canvas -->
+  <canvas id="star-canvas"></canvas>
+
+  <!-- ======== NAVIGATION ======== -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#hero" class="nav-logo">
+        <span class="logo-icon">
+          <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+        </span>
+        Space Science
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="#hero" class="active">Home</a>
+        <a href="#about">About</a>
+        <a href="#research">Research</a>
+        <a href="#missions">Missions</a>
+        <a href="#team">Team</a>
+        <a href="#events">Events</a>
+        <a href="blog.html">Blog</a>
+        <a href="javascript:void(0)" onclick="smartDashboardRedirect()" class="nav-login-link" style="margin-left: 20px; color: var(--accent-blue); font-family: var(--font-mono); font-size: 0.8rem; text-decoration: none; border: 1px solid rgba(74, 158, 255, 0.3); padding: 5px 15px; border-radius: 20px;">Access Dashboard</a>
+      </div>
+      <button class="nav-cta" onclick="window.location.href='enlist.html'">Join Us</button>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ======== HERO SECTION ======== -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <!-- Image removed to feature the interactive star canvas -->
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-glow" id="heroGlow"></div>
+
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="outline">SPACE</span>
+        <span class="solid">SCIENCE</span>
+        <span class="solid-small">C L U B</span>
+      </h1>
+      <p class="hero-tagline"><span>//</span> Exploring the cosmos, one discovery at a time</p>
+      <div class="hero-cta-group">
+        <a href="#events" class="btn-primary">
+          See Events
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 17L17 7M17 7H7M17 7V17" />
+          </svg>
+        </a>
+        <a href="#about" class="btn-secondary">Learn More →</a>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <div class="mouse"></div>
+      Scroll
+    </div>
+  </section>
+
+  <!-- ======== ABOUT ======== -->
+  <section class="about-section" id="about">
+    <div class="container">
+      <div class="about-layout">
+        <div class="about-image-wrapper reveal">
+          <img src="assets/images/telescope.png" alt="Space Science Club observation session">
+        </div>
+        <div class="about-content">
+          <div class="section-header reveal">
+            <span class="section-eyebrow">Our Mission</span>
+            <h2 class="section-title">
+              <span class="outline-text">Who</span>
+              <span class="bold-text"> We Are</span>
+            </h2>
+            <p class="section-subtitle">
+              We are a community of curious minds united by our fascination with space. Founded in 2019, the Space
+              Science Club brings together students passionate about astronomy, astrophysics, and space engineering.
+            </p>
+            <p class="section-subtitle" style="margin-top: 16px;">
+              From observing meteor showers to building satellite prototypes, we explore the universe through hands-on
+              projects, research, and collaboration — making the infinite accessible to everyone.
+            </p>
+          </div>
+
+          <div class="about-stats reveal">
+            <div class="stat-item">
+              <span class="stat-number">30+</span>
+              <span class="stat-label">Members</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">12+</span>
+              <span class="stat-label">Projects</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">6+</span>
+              <span class="stat-label">Papers</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== RESEARCH PAPERS ======== -->
+  <section class="research-section" id="research">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow">Research Papers</span>
+        <h2 class="section-title">
+          <span class="outline-text">Our</span>
+          <span class="bold-text"> Discoveries</span>
+        </h2>
+        <p class="section-subtitle">Peer-reviewed papers and academic studies conducted by our members to expand our
+          knowledge of space science.</p>
+      </div>
+
+      <div class="research-grid" id="researchGridHome">
+        <!-- Javascript will populate the most recent research nodes here -->
+        <p style="color:var(--text-muted); font-family:var(--font-mono);">Accessing secure research archives...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== MISSIONS (PROJECTS) ======== -->
+  <section class="missions-section" id="missions">
+    <div class="container">
+      <div class="section-header center reveal">
+        <span class="section-eyebrow">Our Missions</span>
+        <h2 class="section-title">
+          <span class="outline-text">Active</span>
+          <span class="bold-text"> Projects</span>
+        </h2>
+        <p class="section-subtitle">Collaborative projects our members are working on — from CubeSat designs to
+          astrophotography databases.</p>
+      </div>
+
+      <div class="missions-grid">
+        <!-- Mission 1 -->
+        <article class="mission-card reveal reveal-delay-1">
+          <span class="mission-status active">Active</span>
+          <h3>CubeSat Atmospheric Sensor</h3>
+          <p>Designing a 1U CubeSat payload to measure atmospheric particulate matter from low Earth orbit.
+            Collaboration with the Physics department.</p>
+          <div class="mission-progress">
+            <div class="progress-label">
+              <span>Progress</span>
+              <span>72%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 72%"></div>
+            </div>
+          </div>
+          <div class="mission-team">
+            <div class="team-avatars">
+              <div class="team-avatar">AK</div>
+              <div class="team-avatar">NM</div>
+              <div class="team-avatar">LW</div>
+              <div class="team-avatar">+4</div>
+            </div>
+            <span class="team-count">7 members</span>
+          </div>
+        </article>
+
+        <!-- Mission 2 -->
+        <article class="mission-card reveal reveal-delay-2">
+          <span class="mission-status active">Active</span>
+          <h3>Stellar Cartography Database</h3>
+          <p>Building an open-source star map catalog with high-resolution astrophotography contributed by club members
+            and partner observatories.</p>
+          <div class="mission-progress">
+            <div class="progress-label">
+              <span>Progress</span>
+              <span>45%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 45%"></div>
+            </div>
+          </div>
+          <div class="mission-team">
+            <div class="team-avatars">
+              <div class="team-avatar">SO</div>
+              <div class="team-avatar">JK</div>
+              <div class="team-avatar">RM</div>
+            </div>
+            <span class="team-count">5 members</span>
+          </div>
+        </article>
+
+        <!-- Mission 3 -->
+        <article class="mission-card reveal reveal-delay-3">
+          <span class="mission-status planning">Planning</span>
+          <h3>Radio Telescope Construction</h3>
+          <p>Planning the build of a 3-meter parabolic radio telescope for detecting hydrogen line emissions from deep
+            space objects.</p>
+          <div class="mission-progress">
+            <div class="progress-label">
+              <span>Progress</span>
+              <span>15%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 15%"></div>
+            </div>
+          </div>
+          <div class="mission-team">
+            <div class="team-avatars">
+              <div class="team-avatar">DW</div>
+              <div class="team-avatar">PO</div>
+            </div>
+            <span class="team-count">3 members</span>
+          </div>
+        </article>
+
+        <!-- Mission 4 (Live Data API) -->
+        <article class="mission-card reveal reveal-delay-4 live-card feature-card">
+          <div class="card-glow-effect"></div>
+          <span class="mission-status live">Live Telemetry</span>
+          <div class="live-header">
+            <h3>ISS Tracker</h3>
+            <div class="radar-ping"></div>
+          </div>
+          <p>Real-time orbital tracking of the International Space Station. Monitoring current celestial coordinates.</p>
+          <div class="live-telemetry">
+            <div class="telemetry-data">
+              <div class="telemetry-item">
+                <span class="label">Latitude</span>
+                <span class="value" id="iss-lat">--.----</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="label">Longitude</span>
+                <span class="value" id="iss-lng">--.----</span>
+              </div>
+            </div>
+            <div class="map-viz">
+              <div class="map-dot" id="iss-dot"></div>
+              <div class="map-grid"></div>
+              <div class="scanning-line"></div>
+            </div>
+          </div>
+          <div class="mission-team">
+            <span class="team-count">Live from Low Earth Orbit</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== OUR TEAM ======== -->
+  <section class="team-section" id="team">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow">The Collective</span>
+        <h2 class="section-title">
+          <span class="outline-text">Our</span>
+          <span class="bold-text"> Team</span>
+        </h2>
+        <p class="section-subtitle">The brilliant minds navigating our trajectory through the cosmos.</p>
+      </div>
+
+      <div class="team-layout reveal">
+        <div class="team-visual-grid">
+          <div class="team-member-card" data-member="1">
+            <img src="https://i.pravatar.cc/400?img=68" alt="Team Member">
+            <div class="card-overlay"></div>
+          </div>
+          <div class="team-member-card" data-member="2">
+            <img src="https://i.pravatar.cc/400?img=12" alt="Team Member">
+            <div class="card-overlay"></div>
+          </div>
+          <div class="team-member-card" data-member="3">
+            <img src="https://i.pravatar.cc/400?img=11" alt="Team Member">
+            <div class="card-overlay"></div>
+          </div>
+          <div class="team-member-card" data-member="4">
+            <img src="https://i.pravatar.cc/400?img=33" alt="Team Member">
+            <div class="card-overlay"></div>
+          </div>
+          <div class="team-member-card" data-member="5">
+            <img src="https://i.pravatar.cc/400?img=13" alt="Team Member">
+            <div class="card-overlay"></div>
+          </div>
+          <div class="team-member-card" data-member="6">
+            <img src="https://i.pravatar.cc/400?img=44" alt="Team Member">
+            <div class="card-overlay"></div>
+          </div>
+        </div>
+
+        <div class="team-info-list">
+          <div class="team-info-item" data-member="1">
+            <div class="info-dot"></div>
+            <div class="info-text">
+              <h3>Alex Thorne</h3>
+              <span>Mission Director</span>
+            </div>
+          </div>
+          <div class="team-info-item" data-member="2">
+            <div class="info-dot"></div>
+            <div class="info-text">
+              <h3>Elena Vance</h3>
+              <span>Lead Astrophysicist</span>
+            </div>
+          </div>
+          <div class="team-info-item" data-member="3">
+            <div class="info-dot"></div>
+            <div class="info-text">
+              <h3>Marcus Wright</h3>
+              <span>Systems Engineer</span>
+            </div>
+          </div>
+          <div class="team-info-item" data-member="4">
+            <div class="info-dot"></div>
+            <div class="info-text">
+              <h3>Sarah Chen</h3>
+              <span>Data Scientist</span>
+            </div>
+          </div>
+          <div class="team-info-item" data-member="5">
+            <div class="info-dot"></div>
+            <div class="info-text">
+              <h3>David Miller</h3>
+              <span>Communications</span>
+            </div>
+          </div>
+          <div class="team-info-item" data-member="6">
+            <div class="info-dot"></div>
+            <div class="info-text">
+              <h3>Jemima Ross</h3>
+              <span>Observatory Lead</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== EVENTS ======== -->
+  <section class="events-section" id="events">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow">Upcoming Schedule</span>
+        <h2 class="section-title">
+          <span class="outline-text">Club</span>
+          <span class="bold-text"> Events</span>
+        </h2>
+        <p class="section-subtitle">Join us for observation nights, guest lectures, and collaborative workshops as we
+          explore
+          our universe.</p>
+      </div>
+
+      <div class="events-grid" id="eventsGridHome">
+        <!-- Javascript will populate the upcoming coordinates here -->
+        <p style="color:var(--text-muted); font-family:var(--font-mono); text-align:center; width:100%;">Calculating
+          celestial trajectories...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== BLOG ======== -->
+  <section class="blog-section" id="blog">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-eyebrow">Latest Updates</span>
+        <h2 class="section-title">
+          <span class="outline-text">Recent</span>
+          <span class="bold-text"> Blog Posts</span>
+        </h2>
+        <p class="section-subtitle">Stories, announcements, and articles from our members about their local and deep
+          space interests.</p>
+      </div>
+
+      <div class="blog-grid" id="blogGridHome">
+        <!-- Javascript will populate the 3 most recent dispatches here -->
+        <p style="color:var(--text-muted); font-family:var(--font-mono);">Contacting deep space relay for dispatches...
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== LEADERBOARD SECTION ======== -->
+  <section class="leaderboard-section reveal" style="padding: 100px 0; background: rgba(5, 10, 24, 0.5);">
+    <div class="container">
+      <div style="text-align: center; margin-bottom: 60px;">
+        <span class="section-eyebrow">The Elite</span>
+        <h2 class="section-title">Top <span class="bold-text">Observers</span></h2>
+        <p class="section-subtitle">The most active contributors to our scientific collective.</p>
+      </div>
+      
+      <div id="leaderboardGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ======== FOOTER ======== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#hero" class="nav-logo">
+            <span class="logo-icon">
+              <img src="assets/images/Gemini_Generated_Image_6vozdj6vozdj6voz.png" alt="SSC">
+            </span>
+            Space Science
+          </a>
+          <p>A student-led community exploring the cosmos through research, projects, and shared curiosity about the
+            universe.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigate</h4>
+          <ul>
+            <li><a href="#hero">Home</a></li>
+            <li><a href="research.html">Research</a></li>
+            <li><a href="#events">Events</a></li>
+            <li><a href="#blog">Blog</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="#missions">Missions</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#">Gallery</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Star Charts</a></li>
+            <li><a href="#">Observation Calendar</a></li>
+            <li><a href="#">Equipment List</a></li>
+            <li><a href="#">Member Handbook</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Space Science Club. All rights reserved.</span>
+        <span>Exploring the infinite.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+  <script>
+    async function smartDashboardRedirect() {
+      const loader = document.getElementById('loader');
+      const progressBar = loader.querySelector('.loader-progress-bar');
+      const lines = loader.querySelectorAll('.terminal-line');
+      
+      loader.classList.remove('hidden');
+      if (progressBar) progressBar.style.width = '100%';
+      lines.forEach(line => line.classList.add('visible'));
+
+      try {
+        await waitForSupabase();
+        const user = await getCurrentUser();
+        if (user) {
+          redirectByRole(user);
+        } else {
+          window.location.href = 'login.html';
+        }
+      } catch (e) {
+        console.error("Auth check failed:", e);
+        window.location.href = 'login.html';
+      }
+    }
+  </script>
+  <script>
+    async function initLeaderboard() {
+      const data = await getLeaderboard();
+      const grid = document.getElementById('leaderboardGrid');
+      if (!grid) return;
+      
+      var html = '';
+      data.forEach(function(user, index) {
+        var safeCallsign = escapeHTML(user.callsign);
+        var safeDivision = escapeHTML(user.division || '');
+        var safeLevel = escapeHTML(String(user.level || 1));
+        var safeXp = escapeHTML(String(user.xp || 0));
+        var rankColor = index < 3 ? 'var(--accent-cyan)' : 'var(--text-muted)';
+        html +=
+          '<div style="background: var(--bg-card); border: 1px solid var(--border-glass); padding: 25px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 20px; transition: transform 0.3s; cursor: pointer;" onclick="window.location.href=\'profile.html?callsign=' + encodeURIComponent(user.callsign) + '\'" onmouseover="this.style.transform=\'translateY(-5px)\'" onmouseout="this.style.transform=\'translateY(0)\'">' +
+            '<div style="font-family: var(--font-display); font-size: 1.5rem; color: ' + rankColor + '; min-width: 40px;">#' + (index + 1) + '</div>' +
+            '<div style="flex: 1;">' +
+              '<h4 style="color: white; margin-bottom: 5px;">' + safeCallsign + '</h4>' +
+              '<div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-blue); text-transform: uppercase;">' + safeDivision + ' // LVL ' + safeLevel + '</div>' +
+            '</div>' +
+            '<div style="text-align: right;">' +
+              '<div style="font-family: var(--font-display); color: white;">' + safeXp + '</div>' +
+              '<div style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted);">XP</div>' +
+            '</div>' +
+          '</div>';
+      });
+      grid.innerHTML = html;
+    }
+    document.addEventListener('DOMContentLoaded', initLeaderboard);
+  </script>
+</body>
+
+</html>
